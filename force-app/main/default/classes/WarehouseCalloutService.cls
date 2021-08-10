@@ -1,11 +1,12 @@
 public with sharing class WarehouseCalloutService implements Queueable{
-   
+    private static final String ENDPOINT = 'https://th-superbadge-apex.herokuapp.com/equipment';
+
     @future(callout=true)
-    public void execute (QueueableContext context) {
+    public static void runWarehouseEquipmentSync() {
         Http http = new Http ();
         HttpRequest request = new HttpRequest ();
-        private static final String endpoint = 'https://th-superbadge-apex.herokuapp.com/equipment';
-        request.setEndpoint(endpoint);
+        
+        request.setEndpoint(ENDPOINT);
         request.setMethod('GET');
         HttpResponse response = http.send(request);
         List<Product2> equipmentsUpdate = new List<Product2>();
@@ -16,10 +17,8 @@ public with sharing class WarehouseCalloutService implements Queueable{
        }else {
            System.debug('Could not fetch data');
        }
-        
 
-
-        for (Product2 e : equipment) {
+        for (Object e : equipment) {
             Map<String,Object> productMap = (Map<String,Object>) e;
             Product2 product = new Product2();
 
@@ -31,24 +30,16 @@ public with sharing class WarehouseCalloutService implements Queueable{
             product.Warehouse_SKU__c = (String) productMap.get('sku');
             product.Name = (String) productMap.get('name');
             product.ProductCode = (String) productMap.get('_id');
-            products.add(product);
+            equipmentsUpdate.add(product);
 
         }
         if(equipmentsUpdate.size() > 0) {
             upsert equipmentsUpdate;
-        }
-        
     }
-
-
-
-    
-    
-    
-    
-
-
-    
-    
+        
+    }  
+    public static void  execute(QueueableContext context) {
+        runWarehouseEquipmentSync();
+    }
 
 }
